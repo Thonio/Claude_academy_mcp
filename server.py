@@ -1,5 +1,6 @@
 from pydantic import Field
 from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp.prompts import base
 
 mcp = FastMCP("DocumentMCP", log_level="ERROR")
 
@@ -13,9 +14,12 @@ docs = {
 }
 
 
+# ---------------------------------------------------------------- Tools
+
+
 @mcp.tool(
     name="read_doc_contents",
-    description="Read the contencts of a document and return it as a string.",
+    description="Read the contents of a document and return it as a string.",
 )
 def read_document(
     doc_id: str = Field(description="Id of the document to read"),
@@ -41,5 +45,80 @@ def edit_document(
 ):
     if doc_id not in docs:
         raise ValueError(f"Doc with id {doc_id} not found")
+    if old_str not in docs[doc_id]:
+        raise ValueError(f"Text '{old_str}' not found in doc {doc_id}")
 
     docs[doc_id] = docs[doc_id].replace(old_str, new_str)
+    return f"Document {doc_id} updated."
+
+
+@mcp.tool(
+    name="create_document",
+    description="Create a new document with the given id and content. Fails if the id already exists.",
+)
+def create_document(
+    doc_id: str = Field(description="Id (file name) of the new document, e.g. 'notes.md'"),
+    content: str = Field(description="The initial content of the document"),
+):
+    if doc_id in docs:
+        raise ValueError(f"Doc with id {doc_id} already exists")
+
+    docs[doc_id] = content
+    return f"Document {doc_id} created."
+
+
+# ---------------------------------------------------------------- Resources
+
+
+@mcp.resource("docs://documents", mime_type="application/json")
+def list_docs() -> list[str]:
+    return list(docs.keys())
+
+
+@mcp.resource("docs://documents/{doc_id}", mime_type="text/plain")
+def fetch_doc(doc_id: str) -> str:
+    if doc_id not in docs:
+        raise ValueError(f"Doc with id {doc_id} not found")
+
+    return docs[doc_id]
+
+
+# ---------------------------------------------------------------- Prompts
+
+
+@mcp.prompt(
+    name="format",
+    description="Rewrites the contents of the document in Markdown format.",
+)
+def format_document(
+    doc_id: str = Field(description="Id of the document to format"),
+) -> list[base.Message]:
+    prompt = f"""
+Your goal is to reformat a document to be written with markdown syntax.
+
+The id of the document you need to reformat is:
+<document_id>
+{doc_id}
+</document_id>
+
+Add in headers, bullet points, tables, etc as necessary. Feel free to add in extra text, but don't change the meaning of the report.
+Use the 'edit_document' tool to edit the document. After the document has been edited, respond with the final version of the doc. Don't explain your changes.
+"""
+    return [base.UserMessage(prompt)]
+
+
+@mcp.prompt(
+    name="summarize",
+    description="Summarizes the contents of a document.",
+)
+def summarize_document(
+    doc_id: str = Field(description="Id of the document to summarize"),
+) -> list[base.Message]:
+    prompt = f"""
+Read the document with id '{doc_id}' using the 'read_doc_contents' tool and write a short summary of it (2-3 sentences).
+"""
+    return [base.UserMessage(prompt)]
+
+
+if __name__ == "__main__":
+    mcp.run(transport="stdio")
