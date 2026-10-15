@@ -18,7 +18,37 @@ A small MCP (Model Context Protocol) project, based on the Anthropic Academy MCP
 | Prompt | `format(doc_id)` | Asks Claude to rewrite the doc in Markdown |
 | Prompt | `summarize(doc_id)` | Asks Claude to summarize the doc |
 
-Documents are kept **in memory**: the server starts with 6 sample docs (`deposition.md`, `report.pdf`, `financials.docx`, `outlook.pdf`, `plan.md`, `spec.txt`). Changes and new docs last only while the server is running, which is as long as the client runs.
+Documents are kept **in memory**: the server starts with 7 sample docs (`deposition.md`, `report.pdf`, `financials.docx`, `outlook.pdf`, `plan.md`, `spec.txt`, `example.md`). Changes and new docs last only while the server is running, which is as long as the client runs.
+
+### Example document: `example.md`
+
+`example.md` is a longer, multi-line sample you can use to try reading, editing and formatting:
+
+```markdown
+# Condenser Tower Inspection - Example
+
+Inspection date: 2026-10-01
+Inspector: J. Doe
+
+## Findings
+- The 20m tower shows minor corrosion on the north face.
+- Fan motor vibration is within normal limits.
+- Water treatment logs are complete.
+
+## Next steps
+1. Repaint the north face before winter.
+2. Re-inspect the fan motor in 6 months.
+```
+
+Ways to read it:
+
+| From | How |
+|---|---|
+| Python client | `await client.call_tool("read_doc_contents", {"doc_id": "example.md"})` |
+| Python client (resource) | `await client.read_resource("docs://documents/example.md")` |
+| Chat (Claude calls the tool) | `> What are the next steps in example.md?` |
+| Chat (attach as context) | `> Summarize @example.md` |
+| Chat (server prompt) | `> /summarize example.md` |
 
 ## Setup
 
@@ -46,12 +76,16 @@ ANTHROPIC_API_KEY=sk-ant-...
 python mcp_client.py
 ```
 
-This starts the server, lists its tools, prompts and docs, then creates `notes.md`, reads it, edits it and reads it back:
+This starts the server, lists its tools, prompts and docs, reads `example.md`, then creates `notes.md`, reads it, edits it and reads it back:
 
 ```
 Tools:   ['read_doc_contents', 'edit_document', 'create_document']
 Prompts: ['format', 'summarize']
-Docs:    ['deposition.md', 'report.pdf', ...]
+Docs:    ['deposition.md', 'report.pdf', ..., 'example.md']
+
+-- read example.md
+# Condenser Tower Inspection - Example
+...
 
 -- create notes.md
 Document notes.md created.

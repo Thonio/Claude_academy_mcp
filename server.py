@@ -11,6 +11,20 @@ docs = {
     "outlook.pdf": "This document presents the projected future performance of the system",
     "plan.md": "The plan outlines the steps for the project's implementation.",
     "spec.txt": "These specifications define the technical requirements for the equipment",
+    "example.md": """# Condenser Tower Inspection - Example
+
+Inspection date: 2026-10-01
+Inspector: J. Doe
+
+## Findings
+- The 20m tower shows minor corrosion on the north face.
+- Fan motor vibration is within normal limits.
+- Water treatment logs are complete.
+
+## Next steps
+1. Repaint the north face before winter.
+2. Re-inspect the fan motor in 6 months.
+""",
 }
 
 

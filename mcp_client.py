@@ -83,6 +83,9 @@ async def demo():
         print("Prompts:", [p.name for p in await client.list_prompts()])
         print("Docs:   ", await client.read_resource("docs://documents"))
 
+        print("\n-- read example.md")
+        print(_text(await client.call_tool("read_doc_contents", {"doc_id": "example.md"})))
+
         print("\n-- create notes.md")
         print(_text(await client.call_tool(
             "create_document", {"doc_id": "notes.md", "content": "Meeting at 10am."}
